@@ -1,0 +1,54 @@
+---
+title: "Fig. 7A"
+author: "Zidao Wang"
+date: "2025-04-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#CellChat analysis
+Idents(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5) <- "Trans_MD_cell"
+sub <- subset(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, idents = c("Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", 
+                                                                                    "Perivascular cells", "Trans_tdTomatoH", "MD", "Non_MD"))
+# 1. Create a CellChat object from a Seurat RDS file
+data.input <- GetAssayData(sub, assay = "RNA", layer = "counts") 
+labels <- Idents(sub)
+meta <- data.frame(cell_type = labels, row.names = names(labels)) 
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "cell_type")
+##Add group info to the meta data (extract characters before "_" in the row names to a new column in the meta)
+meta$group <- sub("_.*", "", rownames(meta))
+cellchat <- createCellChat(object = data.input, meta = meta, group.by = "cell_type")
+# Load the ligand-receptor interaction database
+CellChatDB.mouse <- CellChatDB.mouse # Load the mouse database
+# Show the ligand-receptor categories
+showDatabaseCategory(CellChatDB.mouse)
+# Set all CellChatDB for cell-cell communication analysis
+CellChatDB.use <- CellChatDB.mouse
+# Add the Secreted Signaling database in the CellChat object
+cellchat@DB <- CellChatDB.use
+#Subset and pre-processing the expression data 
+# subset the expression data to use less RAM
+cellchat <- subsetData(cellchat)
+# Pre-processing the expression data
+cellchat <- identifyOverExpressedGenes(cellchat)
+cellchat <- identifyOverExpressedInteractions(cellchat)
+# Optional: project gene expression data onto protein-protein interaction (PPI)
+cellchat <- projectData(cellchat, PPI.mouse)
+#Compute the communication probability and infer cellular communication network
+# cellchat <- computeCommunProb(cellchat)
+cellchat <- computeCommunProb(cellchat, raw.use = FALSE) # use the projected data
+#Filter out the cell-cell communication if there are only few number of cells in certain cell groups
+cellchat <- filterCommunication(cellchat, min.cells = 10)
+#Infer the cell-cell communication at a signaling pathway level
+cellchat <- computeCommunProbPathway(cellchat)
+#Calculate the aggregated cell-cell communication network
+cellchat <- aggregateNet(cellchat)
+cellchat@net$count
+cellchat@net$weight
+
+#Compute the network centrality scores
+cellchat <- netAnalysis_computeCentrality(cellchat, slot.name = "netP")
+# Scatter plot to visualize aggregated communication networks for each cell type
+netAnalysis_signalingRole_scatter(cellchat) # all signaling pathways

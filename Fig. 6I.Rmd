@@ -1,0 +1,35 @@
+---
+title: "Fig. 6I"
+author: "Zidao Wang"
+date: "2025-04-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+deg <- graph_test(cds, neighbor_graph="principal_graph")
+deg1 <- deg %>% filter (status == "OK", q_value <= 0.05, abs(deg$morans_I) >= 0.2)
+# Plot the Venn Diagram
+# Define colors similar to your image
+venn_colors <- c("#AF4C8F", "#469A9F", "#E18141")
+
+# Create the Venn diagram
+venn.plot <- draw.triple.venn(
+  area1 = 259,  # M
+  area2 = 426,  # T
+  area3 = 454,  # E
+  n12 = 133,    # MT
+  n23 = 144,    # TE
+  n13 = 74,     # ME
+  n123 = 47,    # MTE
+  category = c("M", "T", "E"),
+  fill = venn_colors,
+  alpha = 0.5,  # Transparency to achieve a soft blend
+  lty = "solid",
+  lwd = 2,
+  cex = 2,
+  cat.cex = 2,
+  cat.col = venn_colors
+)
+

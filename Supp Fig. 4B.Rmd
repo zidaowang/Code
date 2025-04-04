@@ -1,0 +1,25 @@
+---
+title: "Supp Fig. 4B"
+author: "Zidao Wang"
+date: "2025-04-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Create the eESC gene list
+eESC_genes <- c("Axin2", "Sox9", "Ctnnb1", "Cdh2", "Fut4", "Msi1", "Notch1", "Alpl", "Tert", "Aldh1a1", "Aldh1a3", "Itga6", "Abcg2", "En2", "Gstm7", "Lef1", "Hist1h2ao", "Hmga1", "Tead2", "Pax8", "Krt19", "Lgr5")
+#Calculate eESC module score
+all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5 <- AddModuleScore(
+  object = all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5,           # The Seurat object
+  features = list(eESC_genes),  # List of genes representing the signature
+  name = "GeneSignatureScore"    # Name of the new score (this will be added to metadata)
+)
+# Visualize the Gene Signature Score across clusters
+# Reorder the cell types in the Seurat object (custom order)
+Idents(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5) <- "Trans_MD_cell"
+VlnPlot(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, features = "GeneSignatureScore1", 
+        idents = c("MD", "Non_MD", "Trans_tdTomatoH", "Trans_tdTomatoL", "Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", "Perivascular cells", "Myometrial cells"), 
+        pt.size = 0) + NoLegend()
+

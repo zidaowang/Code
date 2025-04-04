@@ -1,0 +1,20 @@
+---
+title: "Supp Fig. 2F"
+author: "Zidao Wang"
+date: "2025-04-04"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+pro_ferroptosis_genes <- c("Gls2", "Got1", "Slc38a1", "Abcc1", "Hmox1", "Ireb2", "Tf", "Tfrc", "Ltf", "Yap1", "Acsl4", "Alox12", "Alox15", "Aloxe3", "Cs", "Csf2", "Epas1", "Hilpda", "Lpcat3", "Mdm2", "Mdm4", "Pebp1", "Por", "Sat1", "Sqle", "Ncoa4", "Acvr1b", "Cdkn2a", "Eif2ak2", "Keap1", "Tgfbr1", "Cybb", "Dpp4", "Hdac3", "Nox1", "Nox4")
+DotPlot(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, features = pro_ferroptosis_genes, 
+        idents = c("Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", "MD", "Non_MD", "Perivascular cells"), 
+        col.min = 0, col.max = 2) + RotatedAxis() +
+  scale_y_discrete(labels = c("Mesenchymal cells-1" = "Mes1", 
+                              "Mesenchymal cells-2" = "Mes2", 
+                              "Mesenchymal cells-3" = "Mes3", 
+                              "MD" = "MD epi", 
+                              "Non_MD" = "Non_MD epi", 
+                              "Perivascular cells" = "Peri"))
