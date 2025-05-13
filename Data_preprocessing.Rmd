@@ -68,6 +68,9 @@ Ai14_360.data <- Read10X_h5("./360_cellbender_filtered_feature_bc_matrix_FPR_0.0
 Ai14_372.data <- Read10X_h5("./372_cellbender_filtered_feature_bc_matrix_FPR_0.05_filtered_Seurat.h5")
 
 # Initialize the Seurat object with the raw (non-normalized data).
+# Load the P-Ai14 dataset
+library(ape); for (i in list.files(path = ".", pattern = "_cellbender_filtered_feature_bc_matrix_FPR_0.05_filtered_Seurat.h5")) {t <- Read10X_h5(i)}
+
 Ai14_94 <- CreateSeuratObject(counts = Ai14_94.data, project = "Ai14_94_E18.5", min.cells = 3, min.features = 200)
 Ai14_143 <- CreateSeuratObject(counts = Ai14_143.data, project = "Ai14_143_E18.5", min.cells = 3, min.features = 200)
 Ai14_81 <- CreateSeuratObject(counts = Ai14_81.data, project = "Ai14_81_PPD1", min.cells = 3, min.features = 200)
