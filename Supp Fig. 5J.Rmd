@@ -1,0 +1,30 @@
+---
+title: "Supp Fig 5J"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Epi <- AddModuleScore(Epi, features = list(pro_anoikis_genes), name = "ProAnoikisScore")
+ggplot(metadata, aes(x = groups, y = ProAnoikisScore1, fill = Trans_MD_cell)) +
+  geom_boxplot(position = position_dodge(width = 0.75), outlier.shape = NA) +
+  stat_summary(fun = mean, geom = "line",
+               aes(group = Trans_MD_cell, color = Trans_MD_cell),
+               position = position_dodge(width = 0.75), size = 1) +
+  stat_summary(fun = mean, geom = "point",
+               aes(group = Trans_MD_cell, color = Trans_MD_cell),
+               position = position_dodge(width = 0.75), size = 3) +
+  scale_color_manual(values = c("MD" = "#bf0a30", "Non_MD" = "#0041c2")) +
+  labs(title = "Anoikis Module Score by Cell Type and Time",
+       x = "Time Point",
+       y = "Module Score (ProAnoikisScore1)",
+       fill = "Cell Type",
+       color = "Cell Type") +
+  theme_classic()
+# Calculate p-values for each time point
+stat_results <- metadata %>%
+  group_by(groups) %>%
+  dplyr::summarize(p_value = wilcox.test(ProAnoikisScore1 ~ Trans_MD_cell)$p.value)

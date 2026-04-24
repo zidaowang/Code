@@ -1,0 +1,128 @@
+---
+title: "Fig. 2A"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Create UMAP for all clusters
+Idents(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5) <- "cluster_names"
+DimPlot(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, reduction = "umap", label = F, label.size = 6, raster = F) + 
+  scale_color_manual(values = c("Epithelial cells-1" = "#A3A500", 
+                                "Epithelial cells-2" = "#F8766D",
+                                "Epithelial cells-3" = "#00BDD0",
+                                "Epithelial cells-4" = "#CF9400",
+                                "Epithelial cells-5" = "#CF78FF",
+                                "Epithelial cells-6" = "#FF65AE",
+                                "Epithelial cells-7" = "#00BF7D",
+                                "Epithelial cells-8" = "#7997FF",
+                                "Epithelial cells-9" = "#FF6C90",
+                                "Transitional cells" = "#5BB300", 
+                                "Mesenchymal cells-1" = "#00C19C", 
+                                "Mesenchymal cells-2" = "#ED8141", 
+                                "Mesenchymal cells-3" = "#E08B00", 
+                                "Perivascular cells" = "#AC88FF",
+                                "Myometrial cells" = "#00BC59",
+                                "Trophoblast cells" = "#BB9D00",
+                                "Endothelial cells-1" = "#00C0B8",
+                                "Endothelial cells-2" = "#00B820",
+                                "Endothelial cells-3" = "#00B0F6",
+                                "Plasma cells" = "#00A5FF",
+                                "Immune cells-1" = "#85AD00",
+                                "Immune cells-2" = "#FF61C9",
+                                "Immune cells-3" = "#F763E0",
+                                "Immune cells-4" = "#00B8E5",
+                                "Immune cells-5" = "#E76BF3"),
+                     labels = c("Epithelial cells-1" = "Epi1", 
+                                "Epithelial cells-2" = "Epi2",
+                                "Epithelial cells-3" = "Epi3",
+                                "Epithelial cells-4" = "Epi4",
+                                "Epithelial cells-5" = "Epi5",
+                                "Epithelial cells-6" = "Epi6",
+                                "Epithelial cells-7" = "Epi7",
+                                "Epithelial cells-8" = "Epi8",
+                                "Epithelial cells-9" = "Epi9",
+                                "Transitional cells" = "Trans", 
+                                "Mesenchymal cells-1" = "Mes1", 
+                                "Mesenchymal cells-2" = "Mes2", 
+                                "Mesenchymal cells-3" = "Mes3", 
+                                "Perivascular cells" = "Peri",
+                                "Myometrial cells" = "Myo",
+                                "Trophoblast cells" = "Tropho",
+                                "Endothelial cells-1" = "Endo1",
+                                "Endothelial cells-2" = "Endo2",
+                                "Endothelial cells-3" = "Endo3",
+                                "Plasma cells" = "Plasma",
+                                "Immune cells-1" = "Immune1",
+                                "Immune cells-2" = "Immune2",
+                                "Immune cells-3" = "Immune3",
+                                "Immune cells-4" = "Immune4",
+                                "Immune cells-5" = "Immune5")) +
+  guides(color = guide_legend(override.aes = list(size = 6))) + # Increase size (default is 3)
+  theme(
+    axis.line = element_blank(),  # Remove axis lines
+    axis.text = element_blank(),  # Remove axis text
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),     # Remove x-axis title
+    axis.title.y = element_blank(),     # Remove y-axis title# Remove axis ticks
+    #legend.position = "none"
+  )
+
+#Create UMAP for MD epithelial and MD transitional cells
+Idents(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5) <- "Trans_MD_cell"
+DimPlot(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, reduction = "umap", label = F, label.size = 6, raster = F, 
+        order = c("Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", "Trans_tdTomatoH", 
+                  "Trans_tdTomatoL", "MD", "Non_MD", "Perivascular cells", "Myometrial cells", "Trophoblast cells", 
+                  "Endothelial cells-1", "Endothelial cells-2", "Endothelial cells-3", "Plasma cells", "Immune cells-1", 
+                  "Immune cells-2", "Immune cells-3", "Immune cells-4", "Immune cells-5")) + 
+  scale_color_manual(values = c("Non_MD" = "#C7C6C1",
+                                "MD" = "#F66150",
+                                "Trans_tdTomatoH" = "#F66150", 
+                                "Trans_tdTomatoL" = "#C7C6C1", 
+                                "Mesenchymal cells-1" = "#00C19C", 
+                                "Mesenchymal cells-2" = "#ED8141", 
+                                "Mesenchymal cells-3" = "#E08B00", 
+                                "Perivascular cells" = "#AC88FF",
+                                "Myometrial cells" = "#00BC59",
+                                "Trophoblast cells" = "#BB9D00",
+                                "Endothelial cells-1" = "#00C0B8",
+                                "Endothelial cells-2" = "#00B820",
+                                "Endothelial cells-3" = "#00B0F6",
+                                "Plasma cells" = "#00A5FF",
+                                "Immune cells-1" = "#85AD00",
+                                "Immune cells-2" = "#FF61C9",
+                                "Immune cells-3" = "#F763E0",
+                                "Immune cells-4" = "#00B8E5",
+                                "Immune cells-5" = "#E76BF3"),
+                     labels = c("Non_MD" = "Non_MD epi",
+                                "MD" = "MD epi",
+                                "Trans_tdTomatoH" = "MD trans", 
+                                "Trans_tdTomatoL" = "Non_MD trans",
+                                "Mesenchymal cells-1" = "Mes1", 
+                                "Mesenchymal cells-2" = "Mes2", 
+                                "Mesenchymal cells-3" = "Mes3", 
+                                "Perivascular cells" = "Peri",
+                                "Myometrial cells" = "Myo",
+                                "Trophoblast cells" = "Tropho",
+                                "Endothelial cells-1" = "Endo1",
+                                "Endothelial cells-2" = "Endo2",
+                                "Endothelial cells-3" = "Endo3",
+                                "Plasma cells" = "Plasma",
+                                "Immune cells-1" = "Immune1",
+                                "Immune cells-2" = "Immune2",
+                                "Immune cells-3" = "Immune3",
+                                "Immune cells-4" = "Immune4",
+                                "Immune cells-5" = "Immune5")) +
+  guides(color = guide_legend(override.aes = list(size = 6))) + # Increase size (default is 3)
+  theme(
+    axis.line = element_blank(),  # Remove axis lines
+    axis.text = element_blank(),  # Remove axis text
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),     # Remove x-axis title
+    axis.title.y = element_blank(),     # Remove y-axis title# Remove axis ticks
+    #legend.position = "none"
+  )
+

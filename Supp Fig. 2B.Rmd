@@ -1,0 +1,26 @@
+---
+title: "Supp Fig. 2B"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+VlnPlot(
+  object  = all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5_unfiltered,
+  features = "nFeature_RNA",
+  group.by = "orig.ident",    # column containing sample IDs
+  pt.size  = 0, # hide individual points
+  raster = F
+) +
+  #scale_y_continuous(limits = c(0, 50000)) +    # cap y-axis at 25
+  # Drop the x‑axis title, ticks, and text
+  labs(x = NULL) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x  = element_blank(),
+    axis.ticks.x = element_blank(),
+    legend.position = "none"   # position legend on the right
+

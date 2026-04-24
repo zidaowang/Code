@@ -1,0 +1,73 @@
+---
+title: "Fig. 6I"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+T_to_E_genes0.6 <- c("Alcam", "Grip1", "C3", "Asic2", "Nfib", "Rbm47", "Ezr", "Myo5b", "Sgms1", "Prxl2a", "Ahcyl2", "Thsd4", "Etl4", "Shroom3", "Krt19", "Morrbid", "Cobl", "Myo1d", "Epb41l4a", "Nos1ap", "Sorbs2", "Nav2", "Cadm1", "Vtcn1", "Mid1", "F11r", "Tmem176b", "Map3k5", "Krt8", "Rapgef5", "Arhgef28", "Mtus1", "Atp1a1", "Ptpn14", "Chn2", "Cxadr", "Krt7", "Larp1b", "Lrrc1", "Plekha7", "Ppp2r2b", "Pawr", "Bicd1", "Rhpn2", "Cfb", "Sema3c", "Tec", "Gpr39", "Pced1b", "Pdzd2", "Flnb", "Shtn1", "Ly6e", "Lmo7", "Cd9", "Mob3b", "Baiap2l1", "Resf1", "Gcnt2", "Slit2", "Cacna2d3", "Patj", "Ypel2", "Samd9l", "Dock4", "Tgm2", "Crim1", "Lrba", "Tns3", "Ablim1", "Sema3e", "Csf1", "Abcb1b", "Anxa2", "Iqgap1", "Rreb1", "Nhsl1", "Tmem164", "Tjp2", "Lama3", "Eps8", "Fuca1", "Clic1", "Diaph1", "Dennd1b", "Tmbim6", "Itpr1", "Myo18a", "Dock11", "Ppp1r9a", "Hpcal1", "Rras2", "Pla2g4a", "Anxa1", "Acsl4", "Ctsl")
+
+#Test the DEG for GO analysis
+genes_to_test <- T_to_E_genes0.6 
+GO_results <- enrichGO(gene = genes_to_test, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+# Simplify the results to remove redundant terms by geneID similarity
+# Assume 'GO_results' is your enrichGO result object
+gene_list_per_term <- setNames(GO_results@result$geneID, GO_results@result$Description)
+# Convert to list format for easier manipulation
+gene_lists <- lapply(strsplit(gene_list_per_term, "/"), unique)
+# Function to calculate Jaccard similarity
+jaccard_similarity <- function(set1, set2) {
+  length(intersect(set1, set2)) / length(union(set1, set2))
+}
+
+# Initialize an empty vector to store representative terms
+representative_terms <- c()
+
+# Track terms that have already been compared
+remaining_terms <- names(gene_lists)
+
+# Set similarity threshold
+threshold <- 0.5
+
+# Get the total number of terms
+total_terms <- length(remaining_terms)
+
+# Start timing the process
+start_time <- Sys.time()
+
+# Compare each term with others
+while (length(remaining_terms) > 0) {
+  current_term <- remaining_terms[1]  # Select the first term
+  representative_terms <- c(representative_terms, current_term)  # Keep this term
+  
+  # Identify and remove redundant terms
+  redundant_terms <- sapply(remaining_terms[-1], function(term) {
+    sim <- jaccard_similarity(gene_lists[[current_term]], gene_lists[[term]])
+    return(sim > threshold)  # Mark as redundant if similarity exceeds threshold
+  })
+  # Update remaining_terms to remove redundant terms
+  remaining_terms <- remaining_terms[!c(TRUE, redundant_terms)] 
+  
+  # Calculate and display progress
+  completed_terms <- total_terms - length(remaining_terms)
+  elapsed_time <- Sys.time() - start_time
+  time_per_term <- as.numeric(elapsed_time) / completed_terms  # Time per term
+  remaining_time <- time_per_term * length(remaining_terms)  # Estimate remaining time
+  
+  # Print progress update
+  cat(sprintf("Processed %d/%d terms. Estimated time left: %s\n", completed_terms, total_terms, 
+              format(remaining_time, digits = 2)))
+}
+
+# Filter the original GO results to keep only representative terms
+GO_filtered <- GO_results@result[GO_results@result$Description %in% representative_terms, ]
+# Create a simplified enrichResult object
+GO_simplified_result <- GO_results
+GO_simplified_result@result <- GO_filtered
+
+TE_GO_results <- plot(dotplot(GO_simplified_result, showCategory = 20, label_format = 40) + geom_point(color = "transparent"))
+

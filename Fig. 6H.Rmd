@@ -1,0 +1,158 @@
+---
+title: "Fig. 6H"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+##To test Monocle_deg for their expression in mesenchymal, transitional and epithelial clusters
+# Replace "gene_list.xlsx" with the path to your Excel file
+gene_data <- read_excel("deg1_normalized_thres0.3.xlsx", sheet = 1)
+# Assuming the gene list is in the first column
+gene_list <- gene_data[[1]]  # This extracts the first column as a vector
+
+# Assuming cluster information is stored in the "Trans_MD_cell" column
+cluster_labels <- colData(cds)$Trans_MD_cell
+
+# Define the cluster identities
+mesenchymal_clusters <- c("Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", "Perivascular cells")    # Replace with actual cluster IDs for mesenchymal
+transitional_clusters <- "Trans_tdTomatoH"   # Replace with actual cluster IDs for transitional
+epithelial_clusters <- "MD"     # Replace with actual cluster IDs for epithelial
+
+# Threshold for considering a gene as expressed (adjust as needed)
+expression_threshold <- 0.6
+
+# Function to check if a gene is enriched in specific clusters
+is_enriched <- function(gene, clusters, cds, threshold = expression_threshold) {
+  expr_matrix <- exprs(cds)  # Extract expression matrix
+  cluster_labels <- colData(cds)$Trans_MD_cell  # Extract cluster labels
+  
+  # Check if gene exists in the expression matrix
+  if (!(gene %in% rownames(expr_matrix))) {
+    warning(paste("Gene", gene, "not found in the expression matrix"))
+    return(FALSE)  # Return FALSE if the gene is not found
+  }
+  
+  # Get the indices of cells belonging to the specified clusters
+  cluster_cells <- which(cluster_labels %in% clusters)
+  
+  # Get the expression values for the specified gene in these cluster cells
+  expr_data <- expr_matrix[gene, cluster_cells]
+  
+  # Compute mean expression, removing NAs
+  mean_expr <- mean(expr_data, na.rm = TRUE)
+  
+  # Check if mean expression exceeds the threshold
+  return(mean(expr_data) > threshold)
+}
+
+# Initialize a vector to store results
+gene_labels <- setNames(rep("None", length(gene_list)), gene_list)
+
+# Step 6: Loop through each gene and assign the corresponding label
+for (gene in gene_list) {
+  enriched_in_m <- is_enriched(gene, mesenchymal_clusters, cds)
+  enriched_in_t <- is_enriched(gene, transitional_clusters, cds)
+  enriched_in_e <- is_enriched(gene, epithelial_clusters, cds)
+  
+  # Replace NA values with FALSE to handle missing data
+  enriched_in_m <- ifelse(is.na(enriched_in_m), FALSE, enriched_in_m)
+  enriched_in_t <- ifelse(is.na(enriched_in_t), FALSE, enriched_in_t)
+  enriched_in_e <- ifelse(is.na(enriched_in_e), FALSE, enriched_in_e)
+  
+  # Assign labels based on enrichment patterns
+  if (enriched_in_m & enriched_in_t & enriched_in_e) {
+    gene_labels[gene] <- "M, T, E"
+  } else if (enriched_in_m & enriched_in_t) {
+    gene_labels[gene] <- "M, T"
+  } else if (enriched_in_t & enriched_in_e) {
+    gene_labels[gene] <- "T, E"
+  } else if (enriched_in_m & enriched_in_e) {
+    gene_labels[gene] <- "M, E"
+  } else if (enriched_in_m) {
+    gene_labels[gene] <- "M"
+  } else if (enriched_in_t) {
+    gene_labels[gene] <- "T"
+  } else if (enriched_in_e) {
+    gene_labels[gene] <- "E"
+  } else {
+    gene_labels[gene] <- "None"
+  }
+}
+
+# Step 7: View the results
+print(gene_labels)
+
+# Convert gene_labels to a data frame
+gene_labels_df <- data.frame(Gene = names(gene_labels), Label = gene_labels)
+
+# Write to an Excel file
+write.xlsx(gene_labels_df, file = "gene_labels.xlsx")
+
+
+M_to_T_genes0.6 <- c("Rad51b", "Cacnb2", "Cdh11", "Rora", "Sox5", "Tenm3", "Col3a1", "Pcdh7", "Magi2", "Dcn", "Palld", "Igfbp7", "Cacna1c", "Bnc2", "Nlgn1", "Mgp", "Col1a2", "Slit3", "Sparc", "Usp53", "Col1a1", "Dlc1", "Col5a2", "Col6a1", "Aebp1", "Timp2", "Sema5a", "Cpe", "Pakap.1", "Serping1", "Col6a2", "Fbxl7", "Tgfbr3", "Arhgap10", "Zeb1", "Pde3a", "Heg1", "Adamtsl1", "Mrvi1", "Ano1", "Kcnb2", "Col6a3", "Kalrn", "Igf1", "Abi3bp", "Negr1", "Adk", "Ahnak2", "Cald1", "Tshz3", "Serpinh1", "Col4a1", "Ttc28", "Prune2", "Wt1", "Pdzrn3", "Ptprd", "Bicc1", "Runx1t1", "Pcsk5", "Thsd7a", "Laptm4a", "Lrp1", "B2m", "Mmp14", "Tmtc1", "Adamts2", "Plxdc2", "Fbln2", "Slc8a1", "Samd4", "Kcnd3", "Ar", "Myo5a", "Col4a2", "Tnxb", "Lama4", "Plcl1", "Hip1", "Akt3", "Pamr1", "Pde10a", "Lhfp", "Wt1os", "Sulf1", "Ssbp2")
+
+#Test the DEG for GO analysis
+genes_to_test <- M_to_T_genes0.6 
+GO_results <- enrichGO(gene = genes_to_test, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+# Simplify the results to remove redundant terms by geneID similarity
+# Assume 'GO_results' is your enrichGO result object
+gene_list_per_term <- setNames(GO_results@result$geneID, GO_results@result$Description)
+# Convert to list format for easier manipulation
+gene_lists <- lapply(strsplit(gene_list_per_term, "/"), unique)
+# Function to calculate Jaccard similarity
+jaccard_similarity <- function(set1, set2) {
+  length(intersect(set1, set2)) / length(union(set1, set2))
+}
+
+# Initialize an empty vector to store representative terms
+representative_terms <- c()
+
+# Track terms that have already been compared
+remaining_terms <- names(gene_lists)
+
+# Set similarity threshold
+threshold <- 0.5
+
+# Get the total number of terms
+total_terms <- length(remaining_terms)
+
+# Start timing the process
+start_time <- Sys.time()
+
+# Compare each term with others
+while (length(remaining_terms) > 0) {
+  current_term <- remaining_terms[1]  # Select the first term
+  representative_terms <- c(representative_terms, current_term)  # Keep this term
+  
+  # Identify and remove redundant terms
+  redundant_terms <- sapply(remaining_terms[-1], function(term) {
+    sim <- jaccard_similarity(gene_lists[[current_term]], gene_lists[[term]])
+    return(sim > threshold)  # Mark as redundant if similarity exceeds threshold
+  })
+  # Update remaining_terms to remove redundant terms
+  remaining_terms <- remaining_terms[!c(TRUE, redundant_terms)] 
+  
+  # Calculate and display progress
+  completed_terms <- total_terms - length(remaining_terms)
+  elapsed_time <- Sys.time() - start_time
+  time_per_term <- as.numeric(elapsed_time) / completed_terms  # Time per term
+  remaining_time <- time_per_term * length(remaining_terms)  # Estimate remaining time
+  
+  # Print progress update
+  cat(sprintf("Processed %d/%d terms. Estimated time left: %s\n", completed_terms, total_terms, 
+              format(remaining_time, digits = 2)))
+}
+
+# Filter the original GO results to keep only representative terms
+GO_filtered <- GO_results@result[GO_results@result$Description %in% representative_terms, ]
+# Create a simplified enrichResult object
+GO_simplified_result <- GO_results
+GO_simplified_result@result <- GO_filtered
+
+MT_GO_results <- plot(dotplot(GO_simplified_result, showCategory = 20, label_format = 40) + geom_point(color = "transparent"))
+

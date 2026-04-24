@@ -1,0 +1,34 @@
+---
+title: "Supp Fig. 2A"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Creating QC plots
+all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5_unfiltered$orig.ident <- factor(
+  all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5_unfiltered$orig.ident,
+  levels = c("Ai14_94_E18.5", "Ai14_143_E18.5", "Ai14_38_PPD1", "Ai14_81_PPD1", "Ai14_55_PPD2", "Ai14_153_PPD2", "Ai14_51_PPD3", 
+             "Ai14_162_PPD3", "Ai14_97_PPD4", "Ai14_105_PPD4", "Ai14_360_PPD28", "Ai14_372_PPD28")  # desired order
+)
+# Generate violin plots grouped by sample (orig.ident)
+VlnPlot(
+  object  = all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5_unfiltered,
+  features = "nCount_RNA",
+  group.by = "orig.ident",    # column containing sample IDs
+  pt.size  = 0, # hide individual points
+  raster = F
+) +
+  #scale_y_continuous(limits = c(0, 50000)) +    # cap y-axis at 25
+  # Drop the x‑axis title, ticks, and text
+  labs(x = NULL) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.text.x  = element_blank(),
+    axis.ticks.x = element_blank(),
+    legend.position = "none"   # position legend on the right
+  )
+

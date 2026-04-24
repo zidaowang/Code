@@ -1,0 +1,86 @@
+---
+title: "Fig. 2C"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Create a volcano plot for DEGs of MD
+
+##Calculate all DEGs and MD DEGs
+Epi <- PrepSCTFindMarkers(Epi, assay = "SCT", verbose = TRUE)
+Idents(Epi) <- "Trans_MD_cell"
+MD.markers1 <- FindMarkers(Epi, ident.1 = "MD", ident.2 = "Non_MD", logfc.threshold = 0.5, min.pct = 0.2)
+MD.markers.all <- FindMarkers(Epi, ident.1 = "MD", ident.2 = "Non_MD", logfc.threshold = 0, min.pct = 0.2)
+
+## Replace zero p-values with a very small number
+zero_pval_indices <- which(MD.markers.all$p_val_adj == 0)
+MD.markers.all$p_val_adj[zero_pval_indices] <- runif(length(zero_pval_indices), 1e-308, 1e-298)
+
+## Calculate -log10(p-value)
+MD.markers.all$neg_log10_pval_adj <- -log10(MD.markers.all$p_val_adj)
+
+## Define significance thresholds
+p_val_threshold <- 0.05
+avg_log2FC_threshold <- 0.5
+
+# Determine the range for symmetrical x-axis limits
+max_avg_log2FC <- max(abs(MD.markers.all$avg_log2FC))
+
+## Classify genes for coloring
+MD.markers.all$gene_category <- "NS"  
+MD.markers.all$gene_category[MD.markers.all$p_val_adj < p_val_threshold & MD.markers.all$avg_log2FC > avg_log2FC_threshold] <- "Up"
+MD.markers.all$gene_category[MD.markers.all$p_val_adj < p_val_threshold & MD.markers.all$avg_log2FC < -avg_log2FC_threshold] <- "Down"
+
+## Define custom colors
+volcano_colors <- c("NS" = "grey", "Up" = "#bb0c00", "Down" = "#00AFBB")
+
+## List of genes to label
+genes_to_label <- c("Trpv6", "Ceacam1", "Ptgs1", "Cldn10") 
+
+## Filter for genes to label
+label_genes_df <- MD.markers.all[rownames(MD.markers.all) %in% genes_to_label, ]
+
+# Add gene column (important for ggplot)
+label_genes_df$gene <- rownames(label_genes_df)
+
+# Manually define nudge values
+label_genes_df$nudge_x <- c(0.3, -0.8, 0.2, -0.3)  # Ceacam1's nudge_x is now -0.8
+label_genes_df$nudge_y <- c(0.4, 0.6, 0.5, -0.4)   # Ceacam1's nudge_y is now 0.6
+
+## Create volcano plot
+volcano_plot <- ggplot(MD.markers.all, aes(x = avg_log2FC, y = neg_log10_pval_adj, color = gene_category)) +
+  geom_point(size = 2, alpha = 0.7) +  # Increase transparency for better visibility
+  scale_color_manual(values = volcano_colors) +  # Use defined colors
+  theme_minimal(base_size = 14) +  # Improve readability
+  labs(
+    x = "Log2FC",
+    y = "-Log10(P_val_adj)",
+    color = "Gene Category"
+  ) +
+  theme(legend.position = "top",
+        panel.grid = element_blank(),  # Remove grid
+        panel.border = element_blank(),  # Remove outer border
+        axis.line = element_line(color = "black"),  # Restore x and y axes
+        axis.ticks = element_line(color = "black"),  # Add tick marks
+        axis.text = element_text(color = "black", size = 12)  # Make tick labels visible
+        ) +  # Move legend to top for better visibility
+  geom_hline(yintercept = -log10(p_val_threshold), linetype = "dashed", color = "black", linewidth = 0.8) +  # Significance threshold
+  geom_vline(xintercept = c(-avg_log2FC_threshold, avg_log2FC_threshold), linetype = "dashed", color = "black", linewidth = 0.8) +  # Log2FC cutoff
+  xlim(c(-max_avg_log2FC, max_avg_log2FC)) + # Set symmetrical x-axis limits
+  geom_label_repel(
+    data = label_genes_df,
+    aes(label = rownames(label_genes_df)),
+    size = 5,
+    box.padding = 0.5,
+    point.padding = 0.3,
+    fill = "white",  # Background for better readability
+    color = "black",
+    segment.color = "grey50",
+    max.overlaps = 20,
+    nudge_x = c(0.7, 1, 0, 0.2),  # Move labels slightly in the x-direction
+    nudge_y = c(-15, 0.6, 35, 25)   # Move labels slightly upwards
+  )

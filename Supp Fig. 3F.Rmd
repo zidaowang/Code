@@ -1,0 +1,21 @@
+---
+title: "Supp Fig. 3F"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Supp Fig. 3F
+progenitor_genes <- c("Axin2", "Sox9", "Cdh2", "Fut4", "Msi1", "Notch1", "Tert", "Aldh1a1", "Aldh1a3", "Abcg2", "En2",
+                      "Gstm7", "Lef1", "Hmga1", "Tead2", "Lgr5")
+DotPlot(Epi, features = progenitor_genes, col.min = 0, col.max = 2) + RotatedAxis() +
+  guides(size = guide_legend(title = "% Exp."),  # Update size legend title
+         color = guide_colorbar(title = "Avg. Exp.")) +  # Update color legend title
+  scale_y_discrete(labels = function(x) sub("Epithelial cells-", "Epi", x)) +
+  theme(
+    axis.title.x = element_blank(),  # Remove x-axis title
+    axis.title.y = element_blank()   # Remove y-axis title
+  )

@@ -1,0 +1,77 @@
+---
+title: "Fig. 6B"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Trans_tdTomatoH.markers <- FindMarkers(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, ident.1 = "Trans_tdTomatoH", 
+                                       ident.2 = c("Trans_tdTomatoL", "Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", 
+                                                   "Perivascular cells", "MD", "Non_MD"), 
+                                       logfc.threshold = 1, min.pct = 0.1)
+#Create a Trans_tdTomatoH_markers1_filtered in excel by removing Rpl(s) and mt- genes and import to R
+#Test the DEG for GO analysis in Trans_tdTomatoH (DEG comparing Trans_tdTomatoH vs others in Mes_Epi_Trans)
+genes_to_test <- rownames(Trans_tdTomatoH_markers_filtered[(Trans_tdTomatoH_markers_filtered$avg_log2FC > 1.5 & Trans_tdTomatoH_markers_filtered$pct.1 > 0.3) | 
+                                                             (Trans_tdTomatoH_markers_filtered$avg_log2FC < -1.5 & Trans_tdTomatoH_markers_filtered$pct.2 > 0.3), ])
+GO_results <- enrichGO(gene = genes_to_test, OrgDb = "org.Mm.eg.db", keyType = "SYMBOL", ont = "BP")
+
+# Simplify the results to remove redundant terms by geneID similarity
+# Assume 'GO_results' is your enrichGO result object
+gene_list_per_term <- setNames(GO_results@result$geneID, GO_results@result$Description)
+# Convert to list format for easier manipulation
+gene_lists <- lapply(strsplit(gene_list_per_term, "/"), unique)
+# Function to calculate Jaccard similarity
+jaccard_similarity <- function(set1, set2) {
+  length(intersect(set1, set2)) / length(union(set1, set2))
+}
+
+# Initialize an empty vector to store representative terms
+representative_terms <- c()
+
+# Track terms that have already been compared
+remaining_terms <- names(gene_lists)
+
+# Set similarity threshold
+threshold <- 0.5
+
+# Get the total number of terms
+total_terms <- length(remaining_terms)
+
+# Start timing the process
+start_time <- Sys.time()
+
+# Compare each term with others
+while (length(remaining_terms) > 0) {
+  current_term <- remaining_terms[1]  # Select the first term
+  representative_terms <- c(representative_terms, current_term)  # Keep this term
+  
+  # Identify and remove redundant terms
+  redundant_terms <- sapply(remaining_terms[-1], function(term) {
+    sim <- jaccard_similarity(gene_lists[[current_term]], gene_lists[[term]])
+    return(sim > threshold)  # Mark as redundant if similarity exceeds threshold
+  })
+  # Update remaining_terms to remove redundant terms
+  remaining_terms <- remaining_terms[!c(TRUE, redundant_terms)] 
+  
+  # Calculate and display progress
+  completed_terms <- total_terms - length(remaining_terms)
+  elapsed_time <- Sys.time() - start_time
+  time_per_term <- as.numeric(elapsed_time) / completed_terms  # Time per term
+  remaining_time <- time_per_term * length(remaining_terms)  # Estimate remaining time
+  
+  # Print progress update
+  cat(sprintf("Processed %d/%d terms. Estimated time left: %s\n", completed_terms, total_terms, 
+              format(remaining_time, digits = 2)))
+}
+
+# Filter the original GO results to keep only representative terms
+GO_filtered <- GO_results@result[GO_results@result$Description %in% representative_terms, ]
+# Create a simplified enrichResult object
+GO_simplified_result <- GO_results
+GO_simplified_result@result <- GO_filtered
+
+Trans_tdTomatoH_GO_results <- plot(dotplot(GO_simplified_result, showCategory = 25, label_format = 40) + geom_point(color = "transparent"))
+

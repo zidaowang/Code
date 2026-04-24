@@ -1,0 +1,13 @@
+---
+title: "Fig. 7G"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+netVisual_chord_gene (cellchat, signaling = "EPHA", lab.cex = 0.6, 
+                      legend.pos.x = 15, legend.pos.y = 120)
+

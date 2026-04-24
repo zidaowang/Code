@@ -1,0 +1,33 @@
+---
+title: "Fig. 6D"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+MET_genes_science2016 <- MET_science2016$Gene
+mousify <- function(a){
+  return(paste0(substr(a,1,1), tolower(substr(a,2,nchar(a)))))
+}
+MET_genes_science2016 <- sapply(MET_genes_science2016, mousify)
+counts <- GetAssayData(sub, layer = "counts")
+cell_rankings <- AUCell_buildRankings(counts)
+cells_AUC <- AUCell_calcAUC(MET_genes_science2016, cell_rankings)
+cells_assignment <- AUCell_exploreThresholds(cells_AUC, plotHist = T, assign = T)
+sub$MET_EnrichedCell <- ifelse(colnames(sub) %in% cells_assignment$geneSet$assignment, "MGE", "Non-MGE")
+DimPlot(sub, reduction = "umap", group.by = "MET_EnrichedCell", label = F, raster = F) +
+  scale_color_manual(values = c("MGE" = "#F598AB", 
+                                "Non-MGE" = "#9AA0F5")) +
+  guides(color = guide_legend(override.aes = list(size = 6))) + # Increase size (default is 3)
+  theme(
+    axis.line = element_blank(),  # Remove axis lines
+    axis.text = element_blank(),  # Remove axis text
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),     # Remove x-axis title
+    axis.title.y = element_blank(),     # Remove y-axis title# Remove axis ticks
+    #legend.position = "none",  # Remove the legend
+    plot.title = element_blank(),  # Remove the title
+  )

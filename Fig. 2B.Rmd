@@ -1,0 +1,28 @@
+---
+title: "Fig. 2B"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+#Create heatmap to compare MD and Non_MD
+Idents(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5) <- "Trans_MD_cell"
+subset <- subset(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, idents = c("MD", "Non_MD", "Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", 
+                                                                                       "Perivascular cells", "Myometrial cells"))
+subset <- PrepSCTFindMarkers(subset, assay = "SCT", verbose = TRUE)
+Epi.markers <- FindAllMarkers(subset, logfc.threshold = 1, min.pct = 0.2, only.pos = T)
+#Add a column named pct_diff to the Epi.markers table
+Epi.markers$pct_diff <- Epi.markers$pct.1 - Epi.markers$pct.2
+#Arrange the genes first based on p_val_adj, if ties, then based on difference between pct.1 and pct.2 
+Epi.markers <- Epi.markers %>%
+  arrange(p_val_adj, desc(abs(pct_diff)))
+#Pick the first 10 genes in each cluster
+top10 <- Epi.markers %>% group_by(cluster) %>% slice_head(n = 10)
+#Reorder the clusters for the heatmap
+subset@active.ident <- factor(subset@active.ident, levels = c("Non_MD", "MD", "Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", 
+                                                              "Perivascular cells", "Myometrial cells"))
+heatmap <- DoHeatmap(subset, features = top10$gene, label = F) + 
+  theme(plot.margin = unit(c(1, 1, 1, 1), "cm"), axis.text.x = element_blank()) # Adjust the margins as needed  

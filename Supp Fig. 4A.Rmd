@@ -1,0 +1,122 @@
+---
+title: "Supp Fig. 4A"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Load the Endo dataset
+Endo1.data <- Read10X("./Endo1")
+Endo2.data <- Read10X("./Endo2")
+Endo3.data <- Read10X("./Endo3")
+Endo4.data <- Read10X("./Endo4")
+
+# Initialize the Seurat object with the raw (non-normalized data)
+Endo1 <- CreateSeuratObject(counts = Endo1.data, project = "Endo1", min.cells = 3, min.features = 200)
+Endo2 <- CreateSeuratObject(counts = Endo2.data, project = "Endo2", min.cells = 3, min.features = 200)
+Endo3 <- CreateSeuratObject(counts = Endo3.data, project = "Endo3", min.cells = 3, min.features = 200)
+Endo4 <- CreateSeuratObject(counts = Endo4.data, project = "Endo4", min.cells = 3, min.features = 200)
+
+# Doublet filtering Doublet
+Endo1.sce <- as.SingleCellExperiment(Endo1) # Convert to single cell experiment format
+Endo1.sce <- scDblFinder(Endo1.sce) # run scDblFinder with default settings.
+Endo1$scDblFinder.score <- Endo1.sce$scDblFinder.score # add the score to the seurat object metadata
+Endo1$scDblFinder.class <- Endo1.sce$scDblFinder.class # add the classification of doublet or not
+
+Endo2.sce <- as.SingleCellExperiment(Endo2)
+Endo2.sce <- scDblFinder(Endo2.sce) 
+Endo2$scDblFinder.score <- Endo2.sce$scDblFinder.score 
+Endo2$scDblFinder.class <- Endo2.sce$scDblFinder.class
+
+Endo3.sce <- as.SingleCellExperiment(Endo3)
+Endo3.sce <- scDblFinder(Endo3.sce) 
+Endo3$scDblFinder.score <- Endo3.sce$scDblFinder.score 
+Endo3$scDblFinder.class <- Endo3.sce$scDblFinder.class
+
+Endo4.sce <- as.SingleCellExperiment(Endo4)
+Endo4.sce <- scDblFinder(Endo4.sce) 
+Endo4$scDblFinder.score <- Endo4.sce$scDblFinder.score 
+Endo4$scDblFinder.class <- Endo4.sce$scDblFinder.class
+
+# The [[ operator can add columns to object metadata. This is a great place to stash QC stats
+Endo1[["percent.mt"]] <- PercentageFeatureSet(Endo1, pattern = "^mt-")
+Endo2[["percent.mt"]] <- PercentageFeatureSet(Endo2, pattern = "^mt-")
+Endo3[["percent.mt"]] <- PercentageFeatureSet(Endo3, pattern = "^mt-")
+Endo4[["percent.mt"]] <- PercentageFeatureSet(Endo4, pattern = "^mt-")
+
+#mtRNA filter
+Endo1 <- subset(Endo1, subset = nFeature_RNA > 200 & nFeature_RNA < 4000 & percent.mt < 25 & scDblFinder.score < 0.75)
+Endo2 <- subset(Endo2, subset = nFeature_RNA > 200 & nFeature_RNA < 4000 & percent.mt < 25 & scDblFinder.score < 0.75)
+Endo3 <- subset(Endo3, subset = nFeature_RNA > 200 & nFeature_RNA < 4000 & percent.mt < 25 & scDblFinder.score < 0.75)
+Endo4 <- subset(Endo4, subset = nFeature_RNA > 200 & nFeature_RNA < 4000 & percent.mt < 25 & scDblFinder.score < 0.75)
+
+#Adding a column to the metadata
+
+Endo1@meta.data$groups <- "Endo1"
+Endo2@meta.data$groups <- "Endo2"
+Endo3@meta.data$groups <- "Endo3"
+Endo4@meta.data$groups <- "Endo4"
+
+#SCTransform
+
+Endo1 <- SCTransform(Endo1, assay="RNA", verbose=TRUE)
+Endo2 <- SCTransform(Endo2, assay="RNA", verbose=TRUE)
+Endo3 <- SCTransform(Endo3, assay="RNA", verbose=TRUE)
+Endo4 <- SCTransform(Endo4, assay="RNA", verbose=TRUE)
+
+#Integration
+
+Endo1 <- RunPCA(Endo1, assay="SCT", verbose=FALSE)
+Endo2 <- RunPCA(Endo2, assay="SCT", verbose=FALSE)
+Endo3 <- RunPCA(Endo3, assay="SCT", verbose=FALSE)
+Endo4 <- RunPCA(Endo4, assay="SCT", verbose=FALSE)
+
+#Merge all samples
+all_merged <- merge(Endo1, c(Endo2, Endo3, Endo4), add.cell.ids = c("Endo1", "Endo2", "Endo3", "Endo4"))
+
+#Assign default assay for downstream analysis
+DefaultAssay(all_merged) <- "SCT"
+
+VariableFeatures(all_merged) <- c(VariableFeatures(Endo1), VariableFeatures(Endo2), VariableFeatures(Endo3), VariableFeatures(Endo4))
+
+#SCTransform to the merged sample
+all_merged <- SCTransform(object = all_merged)
+
+all_merged_harmony <- RunPCA(all_merged, assay="SCT", verbose=TRUE)
+all_merged_harmony <- IntegrateLayers(object = all_merged_harmony, method = HarmonyIntegration, orig.reduction = "pca", new.reduction = "harmony", 
+                                      layers = "data", assay = "SCT", verbose = TRUE)
+all_merged_harmony <- FindNeighbors(object = all_merged_harmony, reduction="harmony", dims=1:30)
+all_merged_harmony_cluster <- FindClusters(all_merged_harmony, resolution=0.1, verbose=FALSE)
+all_merged_harmony_cluster <- RunUMAP(all_merged_harmony_cluster, reduction = "harmony", assay = "SCT", dims = 1:30)
+
+saveRDS(all_merged_harmony_cluster, file = "Endo1to4.rds")
+Endo1to4 <- readRDS("Endo1to4.rds")
+
+#Cluster annotation for the merged sample
+Endo1to4 <- PrepSCTFindMarkers(Endo1to4, assay = "SCT", verbose = TRUE)
+Endo1to4.markers <- FindAllMarkers(Endo1to4, logfc.threshold = 1, min.pct = 0.05, verbose = TRUE, only.pos = TRUE)
+
+Idents(Endo1to4) <- "seurat_clusters"
+Endo1to4 <- RenameIdents(Endo1to4,
+                               `0` = "Mes", `1` = "Epi1", `2` = "NK", `3` = "Apoptotic", `4` = "MP", `5` = "T1", `6` = "Epi2", 
+                               `7` = "Endo", `8` = "Proliferating1",`9` = "T2", `10` = "Mast", `11` = "Myo", `12` = "NP",
+                               `13` = "Proliferating2")
+
+levels(Endo1to4) <- c("Mes", "Epi1", "Epi2", "Myo", "Endo", "NK", "T1", "T2", "MP", "NP", "Mast", "Proliferating1", 
+                      "Proliferating2", "Apoptotic")
+
+DimPlot(Endo1to4, reduction = "umap", label = F, label.size = 6, raster = F) +
+  guides(color = guide_legend(override.aes = list(size = 6))) + # Increase size (default is 3)
+  theme(
+    axis.line = element_blank(),  # Remove axis lines
+    axis.text = element_blank(),  # Remove axis text
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),     # Remove x-axis title
+    axis.title.y = element_blank(),     # Remove y-axis title# Remove axis ticks
+    #legend.position = "none",  # Remove the legend
+    plot.title = element_blank(),  # Remove the title
+  )
+

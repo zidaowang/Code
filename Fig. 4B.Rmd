@@ -1,0 +1,20 @@
+---
+title: "Fig. 4B"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+pro_apoptosis_genes <- c("Fas", "Tnf", "Tradd", "Fadd", "Apaf1", "Igfbp3", "Casp2", "Casp9", "Casp10", "Aifm1", "Diablo", "Cycs", "Ctsd", "Trp53", "Atg5", "Anxa1", "Pik3ca", "Ano6", "Foxo1",  Bax", "Bak1", "Bid", "Bcl2l11", "Bmf", "Bik", "Bad", "Bbc3", "Pmaip1", "Hrk", "Casp3", "Casp6", "Casp7", "Casp8")
+DotPlot(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, features = pro_apoptosis_genes, 
+        idents = c("Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", "MD", "Non_MD", "Perivascular cells"), 
+        col.min = 0, col.max = 2) + RotatedAxis() +
+  scale_y_discrete(labels = c("Mesenchymal cells-1" = "Mes1", 
+                              "Mesenchymal cells-2" = "Mes2", 
+                              "Mesenchymal cells-3" = "Mes3", 
+                              "MD" = "MD epi", 
+                              "Non_MD" = "Non_MD epi", 
+                              "Perivascular cells" = "Peri"))

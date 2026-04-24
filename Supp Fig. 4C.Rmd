@@ -1,0 +1,63 @@
+---
+title: "Supp Fig. 4C"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+res <- Trans_tdTomatoH_markers_filtered %>%
+  filter(pct.1 > 0.4, pct.2 < 0.1, avg_log2FC > 2) %>%
+  arrange(desc(avg_log2FC))
+res_markers <- res %>% pull(gene) %>% unique()
+
+#Convert mouse genes to human genes
+
+mm <- useEnsembl(biomart="genes", dataset="mmusculus_gene_ensembl", mirror="useast")
+
+hom <- getBM(
+  attributes = c("ensembl_gene_id",
+                 "hsapiens_homolog_ensembl_gene",
+                 "hsapiens_homolog_associated_gene_name",
+                 "hsapiens_homolog_orthology_type"),
+  filters    = "mgi_symbol",
+  values     = res_markers,
+  mart       = mm,
+  uniqueRows = TRUE
+)
+# 2) (Optional) Add mouse symbols in a second call (feature/external page only)
+mm_names <- getBM(
+  attributes = c("ensembl_gene_id", "external_gene_name"),
+  filters    = "ensembl_gene_id",
+  values     = unique(hom$ensembl_gene_id),
+  mart       = mm,
+  uniqueRows = TRUE
+)
+map <- merge(mm_names, hom, by="ensembl_gene_id", all.y=TRUE)
+names(map) <- c("mouse_ensembl","mouse_symbol","human_ensembl","human_symbol","orthology_type")
+
+res_markers <- map$human_symbol
+res_markers <- res_markers[nzchar(res_markers)]
+
+counts <- GetAssayData(Endo1to4, layer = "counts")
+cell_rankings <- AUCell_buildRankings(counts)
+cells_AUC <- AUCell_calcAUC(res_markers, cell_rankings)
+cells_assignment <- AUCell_exploreThresholds(cells_AUC, plotHist = T, assign = T)
+Endo1to4$Trans_EnrichedCell <- ifelse(colnames(Endo1to4) %in% cells_assignment$geneSet$assignment, "TransGE", "Non-TransGE")
+DimPlot(Endo1to4, reduction = "umap", group.by = "Trans_EnrichedCell", label = F, raster = F) +
+  scale_color_manual(values = c("TransGE" = "#F598AB", 
+                                "Non-TransGE" = "#9AA0F5"),
+                     breaks = c("Non-TransGE", "TransGE")) +
+  guides(color = guide_legend(override.aes = list(size = 6))) + # Increase size (default is 3)
+  theme(
+    axis.line = element_blank(),  # Remove axis lines
+    axis.text = element_blank(),  # Remove axis text
+    axis.ticks = element_blank(),
+    axis.title.x = element_blank(),     # Remove x-axis title
+    axis.title.y = element_blank(),     # Remove y-axis title# Remove axis ticks
+    #legend.position = "none",  # Remove the legend
+    plot.title = element_blank(),  # Remove the title
+  )
+

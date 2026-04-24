@@ -1,0 +1,22 @@
+---
+title: "Supp Fig. 3A"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+Idents(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5) <- " cluster_names"
+Epi <- subset(CytoTRACE2_results, idents = c("Epithelial cells-1", "Epithelial cells-2", "Epithelial cells-3", 
+                                                                                    "Epithelial cells-4", "Epithelial cells-5", "Epithelial cells-6", 
+                                                                                    "Epithelial cells-7", "Epithelial cells-8", "Epithelial cells-9"))
+Epi <- PrepSCTFindMarkers(Epi, assay = "SCT", verbose = TRUE)
+Epi.markers <- FindAllMarkers(Epi, logfc.threshold = 1, min.pct = 0.05, verbose = TRUE, only.pos = TRUE)
+Epi@active.ident <- factor(Epi@active.ident, 
+                           levels = c("Epithelial cells-9", "Epithelial cells-8", "Epithelial cells-7", "Epithelial cells-6", 
+                                      "Epithelial cells-5", "Epithelial cells-4", "Epithelial cells-3", "Epithelial cells-2", "Epithelial cells-1"))
+FeaturePlot(Epi, features = "Cdh1", 
+            cols = c("lightgrey", "#bb0c00"), raster = F, order = T)
+

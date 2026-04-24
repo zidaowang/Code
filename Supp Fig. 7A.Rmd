@@ -1,0 +1,15 @@
+---
+title: "Supp Fig. 7A"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+eESC_MSC_genes <- c("Axin2", "Sox9", "Ctnnb1", "Cdh2", "Fut4", "Msi1", "Notch1", "Alpl", "Tert", "Aldh1a1", "Aldh1a3", "Itga6", "En2", "Gstm7", "Lef1", "Hist1h2ao", "Hmga1", "Tead2", "Pax8", "Krt19", "Lgr5", "Mcam", "Pdgfrb", "Itgb1", "Itga4", "Itgae", "Cd44", "Nt5e", "Thy1", "Eng", "Kit", "Susd2", "Pou5f1", "Cspg4", "Abcg2", "Cd34", "Klf4")
+DotPlot(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, features = eESC_MSC_genes, col.min = 0, col.max = 2, 
+        idents = c("MD", "Non_MD", "Trans_tdTomatoH", "Trans_tdTomatoL", "Mesenchymal cells-1", "Mesenchymal cells-2", "Mesenchymal cells-3", 
+                   "Perivascular cells", "Myometrial cells")) + RotatedAxis()
+

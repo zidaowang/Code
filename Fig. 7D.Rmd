@@ -1,0 +1,14 @@
+---
+title: "Fig. 7D"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Heatmap to visualize major signaling roles of different cell groups
+netAnalysis_signalingRole_network(cellchat, signaling = "WNT", width = 10, 
+                                  height = 5, font.size = 10)
+

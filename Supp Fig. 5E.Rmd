@@ -1,0 +1,15 @@
+---
+title: "Supp Fig. 5E"
+author: "Zidao Wang"
+date: "2026-04-24"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+DotPlot(all_merged_harmony_cluster_v2_PrepSCT_12sample_old_res0.5, features = pyroptosis_genes, col.min = 0, 
+        idents = c("Non_MD", "MD"), col.max = 2, split.by = "groups", cols = "RdYlBu") + RotatedAxis() + 
+  scale_y_discrete(limits = c("MD_PPD4", "MD_PPD3", "MD_PPD2", "MD_PPD1", "MD_E18.5", "Non_MD_PPD4", "Non_MD_PPD3", 
+                              "Non_MD_PPD2", "Non_MD_PPD1", "Non_MD_E18.5"))
+
